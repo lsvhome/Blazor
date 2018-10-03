@@ -11,14 +11,22 @@ let allocateArrayMethod: MethodHandle;
 export const internalFunctions = {
   sendAsync
 }
-
+console.log('-------------------------------------------------------------------------');
+console.error('-------------------------------------------------------------------------');
+console.log(httpClientTypeName);
+debugger;
 async function sendAsync(id: number, body: System_Array<any>, jsonFetchArgs: System_String) {
+
+  console.log('sendAsync JS2 001');
+  console.error('sendAsync JS2 001');
+  debugger;
   let response: Response;
   let responseData: ArrayBuffer;
-
+  console.log('sendAsync JS2 002');
   const fetchOptions: FetchOptions = JSON.parse(platform.toJavaScriptString(jsonFetchArgs));
   const requestInit: RequestInit = Object.assign(fetchOptions.requestInit, fetchOptions.requestInitOverrides);
 
+  console.log('sendAsync JS2 003');
   if (body) {
     requestInit.body = platform.toUint8Array(body);
   }

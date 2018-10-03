@@ -40,22 +40,32 @@ namespace Microsoft.AspNetCore.Blazor.Browser.Http
         protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 001");
             var tcs = new TaskCompletionSource<HttpResponseMessage>();
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 002");
             cancellationToken.Register(() => tcs.TrySetCanceled());
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 003");
 
             int id;
             lock (_idLock)
             {
+                System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 004");
                 id = _nextRequestId++;
+                System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 005");
                 _pendingRequests.Add(id, tcs);
+                System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 006");
             }
 
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 007");
             var options = new FetchOptions();
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 008");
             if (request.Properties.TryGetValue(FetchArgs, out var fetchArgs))
             {
+                System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 009");
                 options.RequestInitOverrides = fetchArgs;
             }
 
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 010");
             options.RequestInit = new RequestInit
             {
                 Credentials = GetDefaultCredentialsString(),
@@ -63,21 +73,31 @@ namespace Microsoft.AspNetCore.Blazor.Browser.Http
                 Method = request.Method.Method
             };
 
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 011");
             options.RequestUri = request.RequestUri.ToString();
-
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 012");
+            var cnt = request.Content == null ? null : await request.Content.ReadAsByteArrayAsync();
             if (JSRuntime.Current is MonoWebAssemblyJSRuntime mono)
             {
-                mono.InvokeUnmarshalled<int, byte[], string, object>(
+
+                //// !!!! var Http_1 = __webpack_require__(/*! ./Services/Http */ "./src/Services/Http.ts");
+                System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 013 {cnt} {options}");
+                var x = mono.InvokeUnmarshalled<int, byte[], string, object>(
                     "Blazor._internal.http.sendAsync",
                     id,
-                    request.Content == null ? null : await request.Content.ReadAsByteArrayAsync(),
+                    cnt,
                     Json.Serialize(options));
+
+                System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 014 {x}");
             }
             else
             {
+                System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 015");
                 throw new NotImplementedException("BrowserHttpMessageHandler only supports running under Mono WebAssembly.");
             }
 
+            System.Diagnostics.Debug.WriteLine($"BrowserHttpMessageHandler.SendAsync 016 {tcs.Task.Status}");
+            
             return await tcs.Task;
         }
 
